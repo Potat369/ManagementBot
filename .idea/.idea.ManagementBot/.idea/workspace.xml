@@ -8,12 +8,7 @@
   </component>
   <component name="ChangeListManager">
     <list default="true" id="ada6445f-0b90-4511-982a-daec4997f74b" name="Changes" comment="">
-      <change afterPath="$PROJECT_DIR$/.gitignore" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/.idea/.idea.ManagementBot/.idea/discord.xml" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/.idea/.idea.ManagementBot/.idea/encodings.xml" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/ManagementBot.csproj" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/ManagementBot.sln" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/Program.cs" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Program.cs" beforeDir="false" afterPath="$PROJECT_DIR$/Program.cs" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -37,6 +32,9 @@
     <setting file="file://$APPLICATION_CONFIG_DIR$/resharper-host/SourcesCache/6bfa449fcf13af36ef0c6f25c4af0b0f050be76eca93f6c842573a6d1e8c785/BaseSocketClient.Events.cs" root0="SKIP_HIGHLIGHTING" />
     <setting file="file://$APPLICATION_CONFIG_DIR$/resharper-host/SourcesCache/85d53b7defc61f21b208bb3fd89148bfe33524d784513b981471448d03fec/LogMessage.cs" root0="SKIP_HIGHLIGHTING" />
     <setting file="file://$USER_HOME$/Downloads/structure.cs" root0="SKIP_HIGHLIGHTING" />
+    <setting file="mock://C:/Users/Yevhenii/RiderProjects/ManagementBot/Program.cs" root0="SKIP_HIGHLIGHTING" />
+    <setting file="mock://C:/Users/Yevhenii/RiderProjects/ManagementBot/Program.cs" root0="SKIP_HIGHLIGHTING" />
+    <setting file="mock://C:/Users/Yevhenii/RiderProjects/ManagementBot/Program.cs" root0="SKIP_HIGHLIGHTING" />
   </component>
   <component name="ProjectColorInfo">{
   &quot;associatedIndex&quot;: 6
@@ -54,7 +52,7 @@
     ".NET Project.ManagementBot.executor": "Run",
     "ASKED_ADD_EXTERNAL_FILES": "true",
     "RunOnceActivity.ShowReadmeOnStart": "true",
-    "git-widget-placeholder": "master",
+    "git-widget-placeholder": "Main",
     "settings.editor.selected.configurable": "preferences.pluginManager"
   },
   "keyToStringList": {

@@ -1,5 +1,4 @@
-﻿using System.Collections;
-using Discord;
+﻿using Discord;
 using Discord.Net;
 using Discord.Rest;
 using Discord.WebSocket;
@@ -23,7 +22,11 @@ class Program
         _client.SlashCommandExecuted += SlashCommandHandler;
         _client.UserVoiceStateUpdated += ClientOnUserVoiceStateUpdated;
         
-        const string token = "MTI2NjQ3OTExNzUyMDMzOTA3NQ.GPAPba.5AyCxaNoNJKqMwnnqB7oi-t-2M_RbcSon5QHoc";
+        var token = Environment.GetEnvironmentVariable("DISCORD_TOKEN");
+        if (token == null)
+        {
+            return;
+        }
 
         await _client.LoginAsync(TokenType.Bot, token);
         await _client.StartAsync();

@@ -1,0 +1,134 @@
+Index: Program.cs
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.BaseRevisionTextPatchEP
+<+>using System.Collections;\r\nusing Discord;\r\nusing Discord.Net;\r\nusing Discord.Rest;\r\nusing Discord.WebSocket;\r\nusing Newtonsoft.Json;\r\n\r\nnamespace ManagementBot;\r\n\r\nclass Program\r\n{\r\n    private static DiscordSocketClient _client;\r\n    private static readonly List<ulong> Channels = [];\r\n    private const string ChannelName = \"channel-name\";\r\n    private const string UserCount = \"user-count\";\r\n    \r\n    public static async Task Main()\r\n    {\r\n        _client = new DiscordSocketClient();\r\n\r\n        _client.Log += Log;\r\n        _client.Ready += ClientOnReady;\r\n        _client.SlashCommandExecuted += SlashCommandHandler;\r\n        _client.UserVoiceStateUpdated += ClientOnUserVoiceStateUpdated;\r\n        \r\n        const string token = \"MTI2NjQ3OTExNzUyMDMzOTA3NQ.GPAPba.5AyCxaNoNJKqMwnnqB7oi-t-2M_RbcSon5QHoc\";\r\n\r\n        await _client.LoginAsync(TokenType.Bot, token);\r\n        await _client.StartAsync();\r\n        \r\n        await Task.Delay(-1);\r\n    }\r\n    private static Task Log(LogMessage msg)\r\n    {\r\n        Console.WriteLine(msg.ToString());\r\n        return Task.CompletedTask;\r\n    }\r\n\r\n    private static async Task ClientOnReady()\r\n    {\r\n        List<ApplicationCommandProperties> applicationCommandProperties = [];\r\n        try\r\n        {\r\n            var createChannelCommand = new SlashCommandBuilder()\r\n                .WithName(\"create-channel\")\r\n                .WithDescription(\"Creates a new temporary channel.\")\r\n                .AddOption(new SlashCommandOptionBuilder()\r\n                    .WithName(\"user-count\")\r\n                    .WithDescription(\"User count for the channel.\")\r\n                    .WithType(ApplicationCommandOptionType.Integer)\r\n                    .WithMinValue(1)\r\n                    .WithMaxValue(99)\r\n                ).AddOption(new SlashCommandOptionBuilder()\r\n                    .WithName(\"channel-name\")\r\n                    .WithDescription(\"The name of the channel.\")\r\n                    .WithType(ApplicationCommandOptionType.String)\r\n                );\r\n            \r\n            applicationCommandProperties.Add(createChannelCommand.Build());\r\n\r\n            await _client.BulkOverwriteGlobalApplicationCommandsAsync(applicationCommandProperties.ToArray());\r\n        }\r\n        catch (HttpException exception)\r\n        {\r\n            var json = JsonConvert.SerializeObject(exception.Errors, Formatting.Indented);\r\n            Console.WriteLine(json);\r\n        }\r\n    }\r\n    \r\n    private static async Task SlashCommandHandler(SocketSlashCommand command)\r\n    {\r\n        switch(command.Data.Name)\r\n        {\r\n            case \"create-channel\":\r\n                await HandleCreateChannelCommand(command);\r\n                break;\r\n        }\r\n    }\r\n\r\n    private static async Task HandleCreateChannelCommand(SocketSlashCommand command)\r\n    {\r\n        var guild = _client.GetGuild(command.GuildId.GetValueOrDefault());\r\n        var userCount = 0;\r\n        var channelName = \"Temporary\";\r\n\r\n        foreach (var option in command.Data.Options)\r\n        {\r\n            switch (option.Name)\r\n            {\r\n                case ChannelName:\r\n                    channelName = (string)option.Value;\r\n                    break;\r\n                case UserCount:\r\n                    userCount = Convert.ToInt32(option.Value);\r\n                    break;\r\n            }\r\n        }\r\n\r\n        var restVoiceChannel = await guild.CreateVoiceChannelAsync(\"\\ud83d\\udd0a，\" + channelName, properties =>\r\n        {\r\n            if (userCount is > 0)\r\n            {\r\n                properties.UserLimit = userCount;\r\n            }\r\n\r\n            properties.CategoryId = 1266497081095229592;\r\n        });\r\n        \r\n        Channels.Add(restVoiceChannel.Id);\r\n        await command.RespondAsync(text: \"Succeed!\", ephemeral: true);\r\n        HandleChannel(restVoiceChannel);\r\n    }\r\n\r\n    private static async Task HandleChannel(RestVoiceChannel restVoiceChannel)\r\n    {\r\n        await Task.Delay(TimeSpan.FromMinutes(5));\r\n        if (await _client.GetChannelAsync(restVoiceChannel.Id) is SocketVoiceChannel voiceChannel && voiceChannel.ConnectedUsers.Count == 0)\r\n        {\r\n            await voiceChannel.DeleteAsync();\r\n            Channels.Remove(restVoiceChannel.Id);\r\n        }\r\n    }\r\n    \r\n    private static async Task ClientOnUserVoiceStateUpdated(SocketUser arg1, SocketVoiceState arg2, SocketVoiceState arg3)\r\n    {\r\n        if (arg2.VoiceChannel != null && Channels.Contains(arg2.VoiceChannel.Id) && arg2.VoiceChannel.ConnectedUsers.Count == 0)\r\n        {\r\n            await arg2.VoiceChannel.DeleteAsync();\r\n            Channels.Remove(arg2.VoiceChannel.Id);\r\n        }\r\n    }\r\n}
+Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
+<+>UTF-8
+===================================================================
+diff --git a/Program.cs b/Program.cs
+--- a/Program.cs	(revision 8b958f40aafd5e0b0dc33707c33054d48c96832b)
++++ b/Program.cs	(date 1722119693269)
+@@ -23,7 +23,11 @@
+         _client.SlashCommandExecuted += SlashCommandHandler;
+         _client.UserVoiceStateUpdated += ClientOnUserVoiceStateUpdated;
+         
+-        const string token = "MTI2NjQ3OTExNzUyMDMzOTA3NQ.GPAPba.5AyCxaNoNJKqMwnnqB7oi-t-2M_RbcSon5QHoc";
++        var token = Environment.GetEnvironmentVariable("DISCORD_TOKEN");
++        if (token == null)
++        {
++            return;
++        }
+ 
+         await _client.LoginAsync(TokenType.Bot, token);
+         await _client.StartAsync();
+Index: .idea/.idea.ManagementBot/.idea/workspace.xml
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.BaseRevisionTextPatchEP
+<+><?xml version=\"1.0\" encoding=\"UTF-8\"?>\r\n<project version=\"4\">\r\n  <component name=\"AutoGeneratedRunConfigurationManager\">\r\n    <projectFile>ManagementBot.csproj</projectFile>\r\n  </component>\r\n  <component name=\"AutoImportSettings\">\r\n    <option name=\"autoReloadType\" value=\"SELECTIVE\" />\r\n  </component>\r\n  <component name=\"ChangeListManager\">\r\n    <list default=\"true\" id=\"ada6445f-0b90-4511-982a-daec4997f74b\" name=\"Changes\" comment=\"\">\r\n      <change afterPath=\"$PROJECT_DIR$/.gitignore\" afterDir=\"false\" />\r\n      <change afterPath=\"$PROJECT_DIR$/.idea/.idea.ManagementBot/.idea/discord.xml\" afterDir=\"false\" />\r\n      <change afterPath=\"$PROJECT_DIR$/.idea/.idea.ManagementBot/.idea/encodings.xml\" afterDir=\"false\" />\r\n      <change afterPath=\"$PROJECT_DIR$/ManagementBot.csproj\" afterDir=\"false\" />\r\n      <change afterPath=\"$PROJECT_DIR$/ManagementBot.sln\" afterDir=\"false\" />\r\n      <change afterPath=\"$PROJECT_DIR$/Program.cs\" afterDir=\"false\" />\r\n    </list>\r\n    <option name=\"SHOW_DIALOG\" value=\"false\" />\r\n    <option name=\"HIGHLIGHT_CONFLICTS\" value=\"true\" />\r\n    <option name=\"HIGHLIGHT_NON_ACTIVE_CHANGELIST\" value=\"false\" />\r\n    <option name=\"LAST_RESOLUTION\" value=\"IGNORE\" />\r\n  </component>\r\n  <component name=\"DpaMonitoringSettings\">\r\n    <option name=\"autoShow\" value=\"false\" />\r\n  </component>\r\n  <component name=\"Git.Settings\">\r\n    <option name=\"RECENT_GIT_ROOT_PATH\" value=\"$PROJECT_DIR$\" />\r\n  </component>\r\n  <component name=\"HighlightingSettingsPerFile\">\r\n    <setting file=\"file://$USER_HOME$/AppData/Local/Symbols/src/dotnet/runtime/3b8b000a0e115700b18265d8ec8c6307056dc94d/src/coreclr/System.Private.CoreLib/src/System/Threading/Monitor.CoreCLR.cs\" root0=\"SKIP_HIGHLIGHTING\" />\r\n    <setting file=\"file://$APPLICATION_CONFIG_DIR$/resharper-host/DecompilerCache/decompiler/d3a451850004403293b134b9fe18ce3fc8f920/e9/34105395/IReadOnlyCollection`1.cs\" root0=\"SKIP_HIGHLIGHTING\" />\r\n    <setting file=\"file://$APPLICATION_CONFIG_DIR$/resharper-host/SourcesCache/113ef4297946cf886daf3c51c05fd36e5fdebd552ce1c1d1218fb2474453ce93/RestVoiceChannel.cs\" root0=\"SKIP_HIGHLIGHTING\" />\r\n    <setting file=\"file://$APPLICATION_CONFIG_DIR$/resharper-host/SourcesCache/15b92c31726693a1d6765b37ac18b627dec71e3636cde1a4a438d25b8679d6f/SocketGuild.cs\" root0=\"SKIP_HIGHLIGHTING\" />\r\n    <setting file=\"file://$APPLICATION_CONFIG_DIR$/resharper-host/SourcesCache/2fc40f13277a776f5747631a18ebe24af185b03ad47df940c2c65e4bcdb69d/SocketVoiceChannel.cs\" root0=\"SKIP_HIGHLIGHTING\" />\r\n    <setting file=\"file://$APPLICATION_CONFIG_DIR$/resharper-host/SourcesCache/3a7fc2f98783fb174af9298320613dd74996aa6b97e822b29249119672447a/SocketCommandBaseData.cs\" root0=\"SKIP_HIGHLIGHTING\" />\r\n    <setting file=\"file://$APPLICATION_CONFIG_DIR$/resharper-host/SourcesCache/3bd1bb8af9ce9bf18121a42db749a1dff1c7b2591fad9ec5ad62b52135e4/SlashCommandBuilder.cs\" root0=\"SKIP_HIGHLIGHTING\" />\r\n    <setting file=\"file://$APPLICATION_CONFIG_DIR$/resharper-host/SourcesCache/6bfa449fcf13af36ef0c6f25c4af0b0f050be76eca93f6c842573a6d1e8c785/BaseSocketClient.Events.cs\" root0=\"SKIP_HIGHLIGHTING\" />\r\n    <setting file=\"file://$APPLICATION_CONFIG_DIR$/resharper-host/SourcesCache/85d53b7defc61f21b208bb3fd89148bfe33524d784513b981471448d03fec/LogMessage.cs\" root0=\"SKIP_HIGHLIGHTING\" />\r\n    <setting file=\"file://$USER_HOME$/Downloads/structure.cs\" root0=\"SKIP_HIGHLIGHTING\" />\r\n  </component>\r\n  <component name=\"ProjectColorInfo\">{\r\n  &quot;associatedIndex&quot;: 6\r\n}</component>\r\n  <component name=\"ProjectId\" id=\"2jnUjEsJt5E4WF8m4qXYujZY2U4\" />\r\n  <component name=\"ProjectLevelVcsManager\" settingsEditedManually=\"true\">\r\n    <ConfirmationsSetting value=\"2\" id=\"Add\" />\r\n  </component>\r\n  <component name=\"ProjectViewState\">\r\n    <option name=\"hideEmptyMiddlePackages\" value=\"true\" />\r\n    <option name=\"showLibraryContents\" value=\"true\" />\r\n  </component>\r\n  <component name=\"PropertiesComponent\"><![CDATA[{\r\n  \"keyToString\": {\r\n    \".NET Project.ManagementBot.executor\": \"Run\",\r\n    \"ASKED_ADD_EXTERNAL_FILES\": \"true\",\r\n    \"RunOnceActivity.ShowReadmeOnStart\": \"true\",\r\n    \"git-widget-placeholder\": \"master\",\r\n    \"settings.editor.selected.configurable\": \"preferences.pluginManager\"\r\n  },\r\n  \"keyToStringList\": {\r\n    \"rider.external.source.directories\": [\r\n      \"C:\\\\Users\\\\Yevhenii\\\\AppData\\\\Roaming\\\\JetBrains\\\\Rider2024.1\\\\resharper-host\\\\DecompilerCache\",\r\n      \"C:\\\\Users\\\\Yevhenii\\\\AppData\\\\Roaming\\\\JetBrains\\\\Rider2024.1\\\\resharper-host\\\\SourcesCache\",\r\n      \"C:\\\\Users\\\\Yevhenii\\\\AppData\\\\Local\\\\Symbols\\\\src\"\r\n    ]\r\n  }\r\n}]]></component>\r\n  <component name=\"RunManager\">\r\n    <configuration name=\"ManagementBot\" type=\"DotNetProject\" factoryName=\".NET Project\">\r\n      <option name=\"EXE_PATH\" value=\"\" />\r\n      <option name=\"PROGRAM_PARAMETERS\" value=\"\" />\r\n      <option name=\"WORKING_DIRECTORY\" value=\"\" />\r\n      <option name=\"PASS_PARENT_ENVS\" value=\"1\" />\r\n      <option name=\"USE_EXTERNAL_CONSOLE\" value=\"0\" />\r\n      <option name=\"USE_MONO\" value=\"0\" />\r\n      <option name=\"RUNTIME_ARGUMENTS\" value=\"\" />\r\n      <option name=\"PROJECT_PATH\" value=\"$PROJECT_DIR$/ManagementBot.csproj\" />\r\n      <option name=\"PROJECT_EXE_PATH_TRACKING\" value=\"1\" />\r\n      <option name=\"PROJECT_ARGUMENTS_TRACKING\" value=\"1\" />\r\n      <option name=\"PROJECT_WORKING_DIRECTORY_TRACKING\" value=\"1\" />\r\n      <option name=\"PROJECT_KIND\" value=\"DotNetCore\" />\r\n      <option name=\"PROJECT_TFM\" value=\"\" />\r\n      <method v=\"2\">\r\n        <option name=\"Build\" />\r\n      </method>\r\n    </configuration>\r\n  </component>\r\n  <component name=\"SpellCheckerSettings\" RuntimeDictionaries=\"0\" Folders=\"0\" CustomDictionaries=\"0\" DefaultDictionary=\"application-level\" UseSingleDictionary=\"true\" transferred=\"true\" />\r\n  <component name=\"TaskManager\">\r\n    <task active=\"true\" id=\"Default\" summary=\"Default task\">\r\n      <changelist id=\"ada6445f-0b90-4511-982a-daec4997f74b\" name=\"Changes\" comment=\"\" />\r\n      <created>1722022467729</created>\r\n      <option name=\"number\" value=\"Default\" />\r\n      <option name=\"presentableId\" value=\"Default\" />\r\n      <updated>1722022467729</updated>\r\n      <workItem from=\"1722022470534\" duration=\"11254000\" />\r\n      <workItem from=\"1722074332496\" duration=\"4241000\" />\r\n    </task>\r\n    <servers />\r\n  </component>\r\n  <component name=\"VcsManagerConfiguration\">\r\n    <option name=\"ADD_EXTERNAL_FILES_SILENTLY\" value=\"true\" />\r\n    <option name=\"CLEAR_INITIAL_COMMIT_MESSAGE\" value=\"true\" />\r\n  </component>\r\n</project>
+Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
+<+>UTF-8
+===================================================================
+diff --git a/.idea/.idea.ManagementBot/.idea/workspace.xml b/.idea/.idea.ManagementBot/.idea/workspace.xml
+--- a/.idea/.idea.ManagementBot/.idea/workspace.xml	(revision 8b958f40aafd5e0b0dc33707c33054d48c96832b)
++++ b/.idea/.idea.ManagementBot/.idea/workspace.xml	(date 1722119535816)
+@@ -8,12 +8,8 @@
+   </component>
+   <component name="ChangeListManager">
+     <list default="true" id="ada6445f-0b90-4511-982a-daec4997f74b" name="Changes" comment="">
+-      <change afterPath="$PROJECT_DIR$/.gitignore" afterDir="false" />
+-      <change afterPath="$PROJECT_DIR$/.idea/.idea.ManagementBot/.idea/discord.xml" afterDir="false" />
+-      <change afterPath="$PROJECT_DIR$/.idea/.idea.ManagementBot/.idea/encodings.xml" afterDir="false" />
+-      <change afterPath="$PROJECT_DIR$/ManagementBot.csproj" afterDir="false" />
+-      <change afterPath="$PROJECT_DIR$/ManagementBot.sln" afterDir="false" />
+-      <change afterPath="$PROJECT_DIR$/Program.cs" afterDir="false" />
++      <change beforePath="$PROJECT_DIR$/.idea/.idea.ManagementBot/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/.idea.ManagementBot/.idea/workspace.xml" afterDir="false" />
++      <change beforePath="$PROJECT_DIR$/Program.cs" beforeDir="false" afterPath="$PROJECT_DIR$/Program.cs" afterDir="false" />
+     </list>
+     <option name="SHOW_DIALOG" value="false" />
+     <option name="HIGHLIGHT_CONFLICTS" value="true" />
+@@ -26,9 +22,21 @@
+   <component name="Git.Settings">
+     <option name="RECENT_GIT_ROOT_PATH" value="$PROJECT_DIR$" />
+   </component>
++  <component name="GitHubPullRequestSearchHistory">{
++  &quot;lastFilter&quot;: {
++    &quot;state&quot;: &quot;OPEN&quot;,
++    &quot;assignee&quot;: &quot;Potat369&quot;
++  }
++}</component>
++  <component name="GithubPullRequestsUISettings">{
++  &quot;selectedUrlAndAccountId&quot;: {
++    &quot;url&quot;: &quot;https://github.com/Potat369/ManagementBot.git&quot;,
++    &quot;accountId&quot;: &quot;9d080b94-8f41-4417-b5b3-d4804f9928db&quot;
++  }
++}</component>
+   <component name="HighlightingSettingsPerFile">
+     <setting file="file://$USER_HOME$/AppData/Local/Symbols/src/dotnet/runtime/3b8b000a0e115700b18265d8ec8c6307056dc94d/src/coreclr/System.Private.CoreLib/src/System/Threading/Monitor.CoreCLR.cs" root0="SKIP_HIGHLIGHTING" />
+-    <setting file="file://$APPLICATION_CONFIG_DIR$/resharper-host/DecompilerCache/decompiler/d3a451850004403293b134b9fe18ce3fc8f920/e9/34105395/IReadOnlyCollection`1.cs" root0="SKIP_HIGHLIGHTING" />
++    <setting file="file://$APPLICATION_CONFIG_DIR$/resharper-host/DecompilerCache/decompiler/d3a451850004403293b134b9fe18ce3fc8f920/e9/34105395/IReadOnlyCollection`1.cs" root0="FORCE_HIGHLIGHTING" />
+     <setting file="file://$APPLICATION_CONFIG_DIR$/resharper-host/SourcesCache/113ef4297946cf886daf3c51c05fd36e5fdebd552ce1c1d1218fb2474453ce93/RestVoiceChannel.cs" root0="SKIP_HIGHLIGHTING" />
+     <setting file="file://$APPLICATION_CONFIG_DIR$/resharper-host/SourcesCache/15b92c31726693a1d6765b37ac18b627dec71e3636cde1a4a438d25b8679d6f/SocketGuild.cs" root0="SKIP_HIGHLIGHTING" />
+     <setting file="file://$APPLICATION_CONFIG_DIR$/resharper-host/SourcesCache/2fc40f13277a776f5747631a18ebe24af185b03ad47df940c2c65e4bcdb69d/SocketVoiceChannel.cs" root0="SKIP_HIGHLIGHTING" />
+@@ -49,22 +57,22 @@
+     <option name="hideEmptyMiddlePackages" value="true" />
+     <option name="showLibraryContents" value="true" />
+   </component>
+-  <component name="PropertiesComponent"><![CDATA[{
+-  "keyToString": {
+-    ".NET Project.ManagementBot.executor": "Run",
+-    "ASKED_ADD_EXTERNAL_FILES": "true",
+-    "RunOnceActivity.ShowReadmeOnStart": "true",
+-    "git-widget-placeholder": "master",
+-    "settings.editor.selected.configurable": "preferences.pluginManager"
++  <component name="PropertiesComponent">{
++  &quot;keyToString&quot;: {
++    &quot;.NET Project.ManagementBot.executor&quot;: &quot;Run&quot;,
++    &quot;ASKED_ADD_EXTERNAL_FILES&quot;: &quot;true&quot;,
++    &quot;RunOnceActivity.ShowReadmeOnStart&quot;: &quot;true&quot;,
++    &quot;git-widget-placeholder&quot;: &quot;Main&quot;,
++    &quot;settings.editor.selected.configurable&quot;: &quot;preferences.pluginManager&quot;
+   },
+-  "keyToStringList": {
+-    "rider.external.source.directories": [
+-      "C:\\Users\\Yevhenii\\AppData\\Roaming\\JetBrains\\Rider2024.1\\resharper-host\\DecompilerCache",
+-      "C:\\Users\\Yevhenii\\AppData\\Roaming\\JetBrains\\Rider2024.1\\resharper-host\\SourcesCache",
+-      "C:\\Users\\Yevhenii\\AppData\\Local\\Symbols\\src"
++  &quot;keyToStringList&quot;: {
++    &quot;rider.external.source.directories&quot;: [
++      &quot;C:\\Users\\Yevhenii\\AppData\\Roaming\\JetBrains\\Rider2024.1\\resharper-host\\DecompilerCache&quot;,
++      &quot;C:\\Users\\Yevhenii\\AppData\\Roaming\\JetBrains\\Rider2024.1\\resharper-host\\SourcesCache&quot;,
++      &quot;C:\\Users\\Yevhenii\\AppData\\Local\\Symbols\\src&quot;
+     ]
+   }
+-}]]></component>
++}</component>
+   <component name="RunManager">
+     <configuration name="ManagementBot" type="DotNetProject" factoryName=".NET Project">
+       <option name="EXE_PATH" value="" />
+@@ -94,12 +102,24 @@
+       <option name="presentableId" value="Default" />
+       <updated>1722022467729</updated>
+       <workItem from="1722022470534" duration="11254000" />
+-      <workItem from="1722074332496" duration="4241000" />
++      <workItem from="1722074332496" duration="4455000" />
++      <workItem from="1722119220293" duration="311000" />
+     </task>
++    <task id="LOCAL-00001" summary="Initial Commit">
++      <option name="closed" value="true" />
++      <created>1722078855104</created>
++      <option name="number" value="00001" />
++      <option name="presentableId" value="LOCAL-00001" />
++      <option name="project" value="LOCAL" />
++      <updated>1722078855104</updated>
++    </task>
++    <option name="localTasksCounter" value="2" />
+     <servers />
+   </component>
+   <component name="VcsManagerConfiguration">
+     <option name="ADD_EXTERNAL_FILES_SILENTLY" value="true" />
+     <option name="CLEAR_INITIAL_COMMIT_MESSAGE" value="true" />
++    <MESSAGE value="Initial Commit" />
++    <option name="LAST_COMMIT_MESSAGE" value="Initial Commit" />
+   </component>
+ </project>
+\ No newline at end of file
